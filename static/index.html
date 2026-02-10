@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor Milheiro → Unidade</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: #111827;
+            --bg-card-hover: #1a2332;
+            --bg-input: #0d1320;
+            --border: #1e2a3a;
+            --border-active: #f59e0b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #f59e0b;
+            --accent-hover: #fbbf24;
+            --accent-glow: rgba(245, 158, 11, 0.15);
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -30%;
+            width: 80vw;
+            height: 80vw;
+            background: radial-gradient(circle, rgba(245,158,11,0.04) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-top: 1rem;
+        }
+
+        header .badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent);
+            background: var(--accent-glow);
+            border: 1px solid rgba(245,158,11,0.2);
+            padding: 0.35rem 1rem;
+            border-radius: 100px;
+            margin-bottom: 1.2rem;
+        }
+
+        header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            margin-bottom: 0.75rem;
+        }
+
+        header h1 span { color: var(--accent); }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            max-width: 520px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Steps */
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 2.5rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.3s;
+        }
+
+        .step .num {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .step.active { color: var(--text-primary); }
+        .step.active .num {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .step.done { color: var(--success); }
+        .step.done .num {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .step-line {
+            width: 40px;
+            height: 2px;
+            background: var(--border);
+            align-self: center;
+            transition: background 0.3s;
+        }
+
+        .step-line.done { background: var(--success); }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .card.hidden { display: none; }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        .card-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Header detection info */
+        .header-info {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Upload area */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+        }
+
+        .upload-zone .icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+        .upload-zone .main-text { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; }
+        .upload-zone .sub-text { font-size: 0.8rem; color: var(--text-muted); }
+        .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+        /* File info */
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.8rem 1.2rem;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+        }
+
+        .file-info .file-icon { font-size: 1.3rem; }
+        .file-info .file-name { font-weight: 600; flex: 1; }
+        .file-info .file-rows { color: var(--text-secondary); font-size: 0.78rem; }
+
+        .file-info .remove-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0.2rem;
+            transition: color 0.2s;
+        }
+
+        .file-info .remove-btn:hover { color: var(--error); }
+
+        /* Column selector */
+        .columns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 0.7rem;
+        }
+
+        .col-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            padding: 0.85rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .col-item:hover { background: var(--bg-card-hover); }
+
+        .col-item.selected {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+        }
+
+        .col-item.disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .col-item .col-header {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+
+        .col-item .checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            font-size: 0.7rem;
+        }
+
+        .col-item.selected .checkbox {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .col-item .col-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .col-item .col-badges {
+            display: flex;
+            gap: 0.4rem;
+            align-items: center;
+        }
+
+        .col-badge {
+            font-size: 0.65rem;
+            padding: 0.12rem 0.45rem;
+            border-radius: 100px;
+            font-weight: 600;
+        }
+
+        .col-badge.numeric {
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+        }
+
+        .col-badge.text-numeric {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fcd34d;
+        }
+
+        .col-badge.text {
+            background: rgba(100, 116, 139, 0.2);
+            color: #94a3b8;
+        }
+
+        .col-badge.ratio {
+            background: var(--bg-input);
+            color: var(--text-muted);
+        }
+
+        .col-item .col-samples {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            padding-left: 2rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .col-item .col-samples strong {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Divisor */
+        .divisor-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .divisor-row label { font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+
+        .divisor-row input {
+            width: 120px;
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .divisor-row input:focus { border-color: var(--accent); }
+        .divisor-row .hint { font-size: 0.78rem; color: var(--text-muted); }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.8rem;
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary { background: var(--accent); color: var(--bg-primary); }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(245,158,11,0.25);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--text-secondary);
+            background: var(--bg-card-hover);
+        }
+
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Table */
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+
+        thead th {
+            background: var(--bg-input);
+            padding: 0.7rem 1rem;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            border-bottom: 1px solid var(--border);
+        }
+
+        thead th.converted { color: var(--accent); }
+
+        tbody td {
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid rgba(30,42,58,0.5);
+            white-space: nowrap;
+        }
+
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: var(--bg-card-hover); }
+        td.converted-cell { color: var(--accent); font-weight: 600; }
+
+        /* Result banner */
+        .result-banner {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.2rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .result-banner.success {
+            background: rgba(16,185,129,0.08);
+            border: 1px solid rgba(16,185,129,0.2);
+            color: var(--success);
+        }
+
+        .result-banner .icon { font-size: 1.5rem; }
+        .result-banner .info { flex: 1; }
+        .result-banner .info strong { display: block; margin-bottom: 0.15rem; }
+        .result-banner .info span { font-size: 0.8rem; opacity: 0.8; }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in { animation: fadeInUp 0.4s ease-out both; }
+
+        @media (max-width: 640px) {
+            .container { padding: 1rem; }
+            .card { padding: 1.5rem; }
+            .upload-zone { padding: 2rem 1rem; }
+            .steps { flex-wrap: wrap; gap: 0.25rem; }
+            .step { font-size: 0.72rem; padding: 0.4rem 0.6rem; }
+            .step-line { width: 20px; }
+            .columns-grid { grid-template-columns: 1fr; }
+            .actions { flex-direction: column; }
+            .btn { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="badge">⚡ Ferramenta de Conversão</div>
+        <h1>Milheiro <span>→</span> Unidade</h1>
+        <p>Faça upload da sua planilha, selecione as colunas com preços em milheiro e converta automaticamente para valor unitário.</p>
+    </header>
+
+    <div class="steps">
+        <div class="step active" id="step1"><span class="num">1</span> Upload</div>
+        <div class="step-line" id="line1"></div>
+        <div class="step" id="step2"><span class="num">2</span> Selecionar</div>
+        <div class="step-line" id="line2"></div>
+        <div class="step" id="step3"><span class="num">3</span> Converter</div>
+    </div>
+
+    <!-- Step 1: Upload -->
+    <div class="card animate-in" id="card-upload">
+        <div class="card-title">📁 Upload da Planilha</div>
+        <div class="card-subtitle">Formatos aceitos: .xlsx, .xls, .csv, .ods</div>
+
+        <div class="upload-zone" id="upload-zone">
+            <span class="icon">📊</span>
+            <div class="main-text">Arraste o arquivo aqui ou clique para selecionar</div>
+            <div class="sub-text">Tamanho máximo: 50MB</div>
+            <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.ods">
+        </div>
+
+        <div id="file-info-container"></div>
+    </div>
+
+    <!-- Step 2: Select Columns -->
+    <div class="card hidden" id="card-columns">
+        <div class="card-title">🎯 Selecione as Colunas para Converter</div>
+        <div class="card-subtitle">Colunas com valores numéricos (ou texto conversível) são selecionáveis. Amostras de valores são exibidas abaixo de cada coluna.</div>
+
+        <div id="header-info-container"></div>
+        <div class="columns-grid" id="columns-grid"></div>
+
+        <div class="divisor-row">
+            <label>Dividir por:</label>
+            <input type="number" id="divisor-input" value="1000" min="1">
+            <span class="hint">1000 = milheiro → unidade</span>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-outline" onclick="resetAll()">← Recomeçar</button>
+            <button class="btn btn-primary" id="btn-convert" disabled onclick="convertColumns()">
+                Converter Selecionadas
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 3: Preview -->
+    <div class="card hidden" id="card-preview">
+        <div class="card-title">📋 Preview dos Dados</div>
+        <div class="card-subtitle" id="preview-subtitle">Primeiras 10 linhas</div>
+        <div class="table-wrapper" id="table-container"></div>
+    </div>
+
+    <div id="result-container"></div>
+</div>
+
+<script>
+    const API_BASE = '';
+    let uploadData = null;
+    let selectedColumns = new Set();
+
+    // Upload zone
+    const uploadZone = document.getElementById('upload-zone');
+    const fileInput = document.getElementById('file-input');
+
+    ['dragenter', 'dragover'].forEach(evt => {
+        uploadZone.addEventListener(evt, e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+    });
+    ['dragleave', 'drop'].forEach(evt => {
+        uploadZone.addEventListener(evt, e => { e.preventDefault(); uploadZone.classList.remove('dragover'); });
+    });
+
+    uploadZone.addEventListener('drop', e => {
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            handleUpload(e.dataTransfer.files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', e => {
+        if (e.target.files.length > 0) handleUpload(e.target.files[0]);
+    });
+
+    async function handleUpload(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        uploadZone.innerHTML = `
+            <span class="spinner"></span>
+            <div class="main-text" style="margin-top:1rem">Analisando arquivo...</div>
+            <div class="sub-text">${file.name}</div>
+        `;
+
+        try {
+            const res = await fetch(`${API_BASE}/api/upload`, { method: 'POST', body: formData });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Erro no upload');
+
+            uploadData = data;
+            showFileInfo(file, data);
+            showColumnSelector(data);
+            renderPreviewTable(data.preview, data.columns, []);
+            updateSteps(2);
+        } catch (err) {
+            uploadZone.innerHTML = `
+                <span class="icon">❌</span>
+                <div class="main-text" style="color:var(--error)">${err.message}</div>
+                <div class="sub-text">Clique para tentar novamente</div>
+                <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.ods">
+            `;
+            rebindFileInput();
+        }
+    }
+
+    function rebindFileInput() {
+        const fi = document.getElementById('file-input');
+        if (fi) fi.addEventListener('change', e => { if (e.target.files.length > 0) handleUpload(e.target.files[0]); });
+    }
+
+    function showFileInfo(file, data) {
+        document.getElementById('file-info-container').innerHTML = `
+            <div class="file-info animate-in">
+                <span class="file-icon">📄</span>
+                <span class="file-name">${data.filename}</span>
+                <span class="file-rows">${data.row_count} linhas · ${data.columns.length} colunas</span>
+                <button class="remove-btn" onclick="resetAll()" title="Remover">✕</button>
+            </div>
+        `;
+        uploadZone.style.display = 'none';
+    }
+
+    function showColumnSelector(data) {
+        const card = document.getElementById('card-columns');
+        const grid = document.getElementById('columns-grid');
+        const headerContainer = document.getElementById('header-info-container');
+
+        card.classList.remove('hidden');
+        card.classList.add('animate-in');
+
+        // Header detection info
+        if (data.header_row > 0) {
+            headerContainer.innerHTML = `
+                <div class="header-info">
+                    ℹ️ Detectamos <strong>${data.header_row} linha(s) de cabeçalho/título</strong> antes dos dados — foram ignoradas automaticamente.
+                </div>
+            `;
+        } else {
+            headerContainer.innerHTML = '';
+        }
+
+        const columnsInfo = data.columns_info || [];
+
+        grid.innerHTML = columnsInfo.map(col => {
+            const isConvertible = col.convertible;
+            const typeLabel = col.type === 'numeric' ? 'numérico'
+                : col.type === 'text_numeric' ? 'texto → numérico'
+                : 'texto';
+            const typeBadgeClass = col.type === 'numeric' ? 'numeric'
+                : col.type === 'text_numeric' ? 'text-numeric'
+                : 'text';
+
+            const samples = (col.sample_values || []).slice(0, 4).join(', ');
+            const ratioText = col.type === 'text_numeric'
+                ? `${Math.round(col.numeric_ratio * 100)}% conversível`
+                : '';
+
+            return `
+                <div class="col-item ${isConvertible ? '' : 'disabled'}"
+                     data-col="${col.name}"
+                     data-convertible="${isConvertible}"
+                     onclick="toggleColumn(this, '${col.name.replace(/'/g, "\\'")}', ${isConvertible})">
+                    <div class="col-header">
+                        <div class="checkbox">${isConvertible ? '' : '—'}</div>
+                        <span class="col-name" title="${col.name}">${col.name}</span>
+                        <div class="col-badges">
+                            <span class="col-badge ${typeBadgeClass}">${typeLabel}</span>
+                            ${ratioText ? `<span class="col-badge ratio">${ratioText}</span>` : ''}
+                        </div>
+                    </div>
+                    ${samples ? `<div class="col-samples"><strong>Amostras:</strong> ${samples}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+
+        document.getElementById('card-preview').classList.remove('hidden');
+        document.getElementById('card-preview').classList.add('animate-in');
+    }
+
+    function toggleColumn(el, colName, isConvertible) {
+        if (!isConvertible) return;
+
+        el.classList.toggle('selected');
+
+        if (selectedColumns.has(colName)) {
+            selectedColumns.delete(colName);
+            el.querySelector('.checkbox').textContent = '';
+        } else {
+            selectedColumns.add(colName);
+            el.querySelector('.checkbox').textContent = '✓';
+        }
+
+        document.getElementById('btn-convert').disabled = selectedColumns.size === 0;
+    }
+
+    async function convertColumns() {
+        const btn = document.getElementById('btn-convert');
+        const divisor = parseFloat(document.getElementById('divisor-input').value) || 1000;
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Convertendo...';
+
+        try {
+            const res = await fetch(`${API_BASE}/api/convert`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ columns: Array.from(selectedColumns), divisor })
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Erro na conversão');
+
+            document.getElementById('result-container').innerHTML = `
+                <div class="result-banner success animate-in">
+                    <span class="icon">✅</span>
+                    <div class="info">
+                        <strong>Conversão concluída com sucesso!</strong>
+                        <span>${data.converted_columns.length} coluna(s) convertida(s) · ${data.row_count} linhas · ÷${divisor}</span>
+                    </div>
+                    <a href="${API_BASE}/api/download" class="btn btn-success" download>⬇ Download</a>
+                </div>
+            `;
+
+            renderPreviewTable(data.preview, uploadData.columns, data.converted_columns);
+            document.getElementById('preview-subtitle').textContent = 'Primeiras 10 linhas — valores convertidos em destaque';
+            updateSteps(3);
+            btn.innerHTML = '✓ Convertido';
+        } catch (err) {
+            btn.disabled = false;
+            btn.innerHTML = 'Converter Selecionadas';
+            alert('Erro: ' + err.message);
+        }
+    }
+
+    function renderPreviewTable(preview, columns, convertedCols) {
+        if (!preview || preview.length === 0) return;
+        const container = document.getElementById('table-container');
+        const convertedSet = new Set(convertedCols);
+
+        let html = '<table><thead><tr>';
+        columns.forEach(col => {
+            html += `<th class="${convertedSet.has(col) ? 'converted' : ''}">${col}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        preview.forEach(row => {
+            html += '<tr>';
+            columns.forEach(col => {
+                const val = row[col] ?? '';
+                const isConverted = convertedSet.has(col);
+                let displayVal = val;
+                if (typeof val === 'number') {
+                    displayVal = val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+                }
+                html += `<td class="${isConverted ? 'converted-cell' : ''}">${displayVal}</td>`;
+            });
+            html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    function updateSteps(active) {
+        for (let i = 1; i <= 3; i++) {
+            const step = document.getElementById(`step${i}`);
+            step.classList.remove('active', 'done');
+            if (i < active) step.classList.add('done');
+            else if (i === active) step.classList.add('active');
+        }
+        for (let i = 1; i <= 2; i++) {
+            document.getElementById(`line${i}`).classList.toggle('done', i < active);
+        }
+    }
+
+    function resetAll() {
+        uploadData = null;
+        selectedColumns.clear();
+
+        uploadZone.style.display = '';
+        uploadZone.innerHTML = `
+            <span class="icon">📊</span>
+            <div class="main-text">Arraste o arquivo aqui ou clique para selecionar</div>
+            <div class="sub-text">Tamanho máximo: 50MB</div>
+            <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.ods">
+        `;
+        rebindFileInput();
+
+        document.getElementById('file-info-container').innerHTML = '';
+        document.getElementById('card-columns').classList.add('hidden');
+        document.getElementById('card-preview').classList.add('hidden');
+        document.getElementById('table-container').innerHTML = '';
+        document.getElementById('result-container').innerHTML = '';
+        document.getElementById('header-info-container').innerHTML = '';
+        document.getElementById('preview-subtitle').textContent = 'Primeiras 10 linhas';
+        document.getElementById('divisor-input').value = '1000';
+        updateSteps(1);
+    }
+</script>
+
+</body>
+</html>
